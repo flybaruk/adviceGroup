@@ -1,0 +1,36 @@
+services:
+  # 1. O PONTO DE CONEXÃO DO SEU SCRIPT
+  selenium-hub:
+    image: selenium/hub:latest 
+    container_name: selenium-hub
+    ports:
+      - "4444:4444"
+
+  # 2. O NÓ COM CHROME E VISUALIZAÇÃO VNC (CORREÇÃO DE NOME E TAG)
+  chrome-node:
+    # Use a imagem standalone, que tem o VNC embutido e a tag :latest é estável para ela.
+    image: selenium/standalone-chrome:latest 
+    
+    container_name: chrome-node
+    ports:
+      - "7900:7900"
+      
+    # As variáveis de ambiente do Hub ainda são necessárias, mas vamos simplificar a conexão
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - VNC_NO_PASSWORD=true
+    depends_on:
+      - selenium-hub
+
+  # 3. SEU PROJETO PYTHON (EXECUTOR)
+  app:
+    image: fluxo 
+    volumes:
+      - .:/usr/src/app 
+    depends_on:
+      - selenium-hub
+      - chrome-node
+    # NOVO COMANDO: Apenas inicia o container e o mantém vivo
+    command: tail -f /dev/null
